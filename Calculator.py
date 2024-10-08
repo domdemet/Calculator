@@ -20,39 +20,79 @@ class Calculator:
         '+': Operator("addition", '+', lambda n1, n2: n1 + n2, 2, "left"),
         '-': Operator("subtraction", '-', lambda n1, n2: n1 - n2, 2, "left"),
         '*': Operator("multiplication", '*', lambda n1, n2: n1 * n2, 3, "left"),
-        '/': Operator("division", '/', lambda n1, n2: n1 / n2 if n2 != 0 else ZeroDivisionError, 3, "left"),
+        '/': Operator("division", '/', lambda n1, n2: n1 / n2 if n2 != 0 else float('inf'), 3, "left"),
         '^': Operator("power", '^', lambda n1, n2: n1 ** n2, 4, "right")
     }
 
-    _supported_operators = "+-*/^"
+    _supported_operators = ''.join(operations.keys())
     _sign = "+-"
     _parentheses = "()"
 
     def __init__(self):
+        self.__mode = None
         self.__expression = None
 
-    # TODO: create menu, add continuous evaluation
     # TODO: add keyboard actions, esc for "back" arrows to browse expression history
 
-    def evaluate_algebraic_expression(self):
+    def main(self):
         while True:
-            isvalid = {"value": False, "msg": None}
-            while not isvalid["value"]:
-                if isvalid["msg"] is not None:
-                    print(isvalid["msg"])
-                print("Enter an algebraic expression to evaluate:")
-                self.get_expression()
-                if self.__expression == "back":
-                    return
-                isvalid = self.validate()
-            self.expression_preprocessor()
+            self.menu_mode()
+            match self.__mode:
+                case "1":
+                    self.evaluate_algebraic_expression()
+                case "2":
+                    self.continuous_evaluation()
+
+    def menu_mode(self):
+        mode = "None"
+        while mode not in "12back":
+            mode = input("Choose a mode from the list below (1):\n"
+                         "1) Evaluate an algebraic expression\n"
+                         "2) Continuous evaluation\n")
+        self.__mode = mode
+
+    def evaluate_algebraic_expression(self, single: bool = False):
+        print("Type 'back' to return to the main menu")
+        while True:
+            self.get_expression("Enter an algebraic expression to evaluate:")
+            if self.__expression == "back":
+                return
+            isvalid = self.validate_expression()
+            self.evaluate_algebraic_expression_preprocessor()
             self.infix_to_postfix()
-            print(self.evaluate_postfix())
+            self.evaluate_postfix()
+            print(self.__expression)
+            if single:
+                return
 
-    def get_expression(self):
-        self.__expression = input()
+    def continuous_evaluation(self):
+        self.evaluate_algebraic_expression(single=True)
+        result = self.__expression
+        while True:
+            self.get_expression("Enter an operator and a value to continue evaluation:\n")
+            if self.__expression == "back":
+                return
+            try:
+                self.validate_for_continuous_evaluation()
+            except Exception as e:
+                print(e)
+                continue
+            self.continuous_evaluation_preprocessor()
+            self.__expression.insert(0, result)
+            self.infix_to_postfix()
+            self.evaluate_postfix()
+            print(self.__expression)
+            result = self.__expression
 
-    def validate(self):
+    def get_expression(self, prompt: str):
+        isvalid = {"value": False, "msg": None}
+        while not isvalid["value"]:
+            if isvalid["msg"] is not None:
+                print(isvalid["msg"])
+            self.__expression = input(prompt)
+            isvalid = {"value": True, "msg": "Exiting"} if self.__expression == "back" else self.validate_expression()
+
+    def validate_expression(self):
         if self.__expression == '':
             return {"value": False, "msg": "Expression is empty\n"}
         if self.__expression[-1] in self._supported_operators or self.__expression[-1] == 'e':
@@ -82,9 +122,13 @@ class Calculator:
 
         return {"value": True, "msg": "Validation successful"}
 
-    def expression_preprocessor(self):
+    def validate_for_continuous_evaluation(self):
+        if self.__expression[0] not in self._supported_operators:
+            raise Exception("First element must be an operator")
+
+    def evaluate_algebraic_expression_preprocessor(self, start_index: int = 0):
         preprocessed_expression = ''
-        for i in range(len(self.__expression)):
+        for i in range(start_index, len(self.__expression)):
             current = self.__expression[i]
             if i == 0:  # First character
                 if (first := self.__expression[0]) == '(':
@@ -106,6 +150,11 @@ class Calculator:
                     preprocessed_expression += self.__expression[i]
 
         self.__expression = preprocessed_expression.split()
+
+    def continuous_evaluation_preprocessor(self):
+        operator, self.__expression = [self.__expression[0]], self.__expression[1:]
+        self.evaluate_algebraic_expression_preprocessor()
+        self.__expression = operator + self.__expression
 
     def infix_to_postfix(self):
         expression_in_postfix: list = []
@@ -143,8 +192,7 @@ class Calculator:
                 n2 = float(calculation_stack.pop())
                 calculation_stack.append(Calculator.operations[elem].function(n2, n1))
 
-        return calculation_stack[0]
+        self.__expression = calculation_stack[0]
 
 
-c = Calculator()
-c.evaluate_algebraic_expression()
+Calculator().main()
