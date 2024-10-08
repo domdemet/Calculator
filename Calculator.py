@@ -54,10 +54,15 @@ class Calculator:
     def evaluate_algebraic_expression(self, single: bool = False):
         print("Type 'back' to return to the main menu")
         while True:
-            self.get_expression("Enter an algebraic expression to evaluate:")
+            self.get_expression("Enter an algebraic expression to evaluate:\n")
             if self.__expression == "back":
                 return
-            isvalid = self.validate_expression()
+            self.validate_expression()
+            try:
+                self.evaluate_algebraic_expression_preprocessor()
+            except Exception as e:
+                print(e)
+                continue
             self.evaluate_algebraic_expression_preprocessor()
             self.infix_to_postfix()
             self.evaluate_postfix()
@@ -136,7 +141,7 @@ class Calculator:
                 elif _is_number(first) or first in Calculator._sign:
                     preprocessed_expression += current
                 elif (first in Calculator._supported_operators) and first not in Calculator._sign:
-                    return Exception("Expression cannot start with an operator")
+                    raise Exception("Expression cannot start with an operator")
             else:  # Middle elements
                 if (current in Calculator._supported_operators + Calculator._parentheses) and (current not in Calculator._sign):
                     preprocessed_expression += f" {current} "
@@ -181,7 +186,7 @@ class Calculator:
 
         self.__expression = expression_in_postfix
 
-    def evaluate_postfix(self) -> float:
+    def evaluate_postfix(self):
         print(self.__expression)
         calculation_stack = []
         for elem in self.__expression:
