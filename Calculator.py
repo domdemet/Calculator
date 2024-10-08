@@ -7,7 +7,7 @@ class Operator:
         self.associativity = associativity
 
 
-def _is_number(test_string):
+def is_number(test_string):
     try:
         float(test_string)
         return True
@@ -35,17 +35,17 @@ class Calculator:
 
     def main(self):
         while True:
-            self.menu_mode()
+            self._menu_mode()
             match self.__mode:
                 case "1":
-                    self.evaluate_algebraic_expression()
+                    self._evaluate_algebraic_expression()
                 case "2":
-                    self.continuous_evaluation()
+                    self._continuous_evaluation()
                 case "back":
                     print("Exiting")
                     return
 
-    def menu_mode(self):
+    def _menu_mode(self):
         mode = "None"
         while mode not in self.MODE_OPTIONS:
             mode = input("Choose a mode from the list below (1-2):\n"
@@ -53,53 +53,52 @@ class Calculator:
                          "2) Continuous evaluation\n")
         self.__mode = mode
 
-    def evaluate_algebraic_expression(self, single: bool = False):
+    def _evaluate_algebraic_expression(self, single: bool = False):
         print("Type 'back' to return to the main menu")
         while True:
-            self.get_expression("Enter an algebraic expression to evaluate:\n")
+            self._get_expression("Enter an algebraic expression to evaluate:\n")
             if self.__expression == "back":
                 return
-            self.validate_expression()
+            self._validate_expression()
             try:
-                self.evaluate_algebraic_expression_preprocessor()
+                self._evaluate_algebraic_expression_preprocessor()
             except Exception as e:
                 print(e)
                 continue
-            self.evaluate_algebraic_expression_preprocessor()
-            self.infix_to_postfix()
-            self.evaluate_postfix()
+            self._infix_to_postfix()
+            self._evaluate_postfix()
             print(self.__expression)
             if single:
                 return
 
-    def continuous_evaluation(self):
-        self.evaluate_algebraic_expression(single=True)
+    def _continuous_evaluation(self):
+        self._evaluate_algebraic_expression(single=True)
         result = self.__expression
         while True:
-            self.get_expression("Enter an operator and a value to continue evaluation:\n")
+            self._get_expression("Enter an operator and a value to continue evaluation:\n")
             if self.__expression == "back":
                 return
             try:
-                self.validate_for_continuous_evaluation()
+                self._validate_for_continuous_evaluation()
             except Exception as e:
                 print(e)
                 continue
-            self.continuous_evaluation_preprocessor()
+            self._continuous_evaluation_preprocessor()
             self.__expression.insert(0, result)
-            self.infix_to_postfix()
-            self.evaluate_postfix()
+            self._infix_to_postfix()
+            self._evaluate_postfix()
             print(self.__expression)
             result = self.__expression
 
-    def get_expression(self, prompt: str):
+    def _get_expression(self, prompt: str):
         isvalid = {"value": False, "msg": None}
         while not isvalid["value"]:
             if isvalid["msg"] is not None:
                 print(isvalid["msg"])
             self.__expression = input(prompt)
-            isvalid = {"value": True, "msg": "Exiting"} if self.__expression == "back" else self.validate_expression()
+            isvalid = {"value": True, "msg": "Exiting"} if self.__expression == "back" else self._validate_expression()
 
-    def validate_expression(self):
+    def _validate_expression(self):
         if self.__expression == '':
             return {"value": False, "msg": "Expression is empty\n"}
         if self.__expression[-1] in self.SUPPORTED_OPERATORS or self.__expression[-1] == 'e':
@@ -108,14 +107,14 @@ class Calculator:
 
         for i in range(len(self.__expression)):
             current = self.__expression[i]
-            number: bool = _is_number(current)
+            number: bool = is_number(current)
             operator: bool = current in self.SUPPORTED_OPERATORS
             parentheses: bool = current in self.PARENTHESES
 
             if current == 'e' and i < len(self.__expression) - 1:
                 before = self.__expression[i - 1]
                 after = self.__expression[i + 1]
-                if not _is_number(before) or not _is_number(after):
+                if not is_number(before) or not is_number(after):
                     return {"value": False, "msg": f"Invalid characters in the entered expression: {current}"}
             elif not (number or operator or parentheses or current == '.'):
                 return {"value": False, "msg": f"Invalid characters in the entered expression: {current}"}
@@ -129,18 +128,18 @@ class Calculator:
 
         return {"value": True, "msg": "Validation successful"}
 
-    def validate_for_continuous_evaluation(self):
+    def _validate_for_continuous_evaluation(self):
         if self.__expression[0] not in self.SUPPORTED_OPERATORS:
             raise Exception("First element must be an operator")
 
-    def evaluate_algebraic_expression_preprocessor(self, start_index: int = 0):
+    def _evaluate_algebraic_expression_preprocessor(self, start_index: int = 0):
         preprocessed_expression = ''
         for i in range(start_index, len(self.__expression)):
             current = self.__expression[i]
             if i == 0:  # First character
                 if (first := self.__expression[0]) == '(':
                     preprocessed_expression += self.__expression[0] + ' '
-                elif _is_number(first) or first in Calculator.SIGN:
+                elif is_number(first) or first in Calculator.SIGN:
                     preprocessed_expression += current
                 elif (first in Calculator.SUPPORTED_OPERATORS) and first not in Calculator.SIGN:
                     raise Exception("Expression cannot start with an operator")
@@ -148,7 +147,7 @@ class Calculator:
                 if (current in Calculator.SUPPORTED_OPERATORS + Calculator.PARENTHESES) and (current not in Calculator.SIGN):
                     preprocessed_expression += f" {current} "
 
-                elif current in Calculator.SIGN and _is_number(self.__expression[i - 1]) and _is_number(self.__expression[i + 1]):
+                elif current in Calculator.SIGN and is_number(self.__expression[i - 1]) and is_number(self.__expression[i + 1]):
                     preprocessed_expression += f" {current} "
 
                 elif current in Calculator.SIGN and (self.__expression[i - 1] == ')' or self.__expression[i + 1] == '('):
@@ -158,16 +157,16 @@ class Calculator:
 
         self.__expression = preprocessed_expression.split()
 
-    def continuous_evaluation_preprocessor(self):
+    def _continuous_evaluation_preprocessor(self):
         operator, self.__expression = [self.__expression[0]], self.__expression[1:]
-        self.evaluate_algebraic_expression_preprocessor()
+        self._evaluate_algebraic_expression_preprocessor()
         self.__expression = operator + self.__expression
 
-    def infix_to_postfix(self):
+    def _infix_to_postfix(self):
         expression_in_postfix: list = []
         operator_stack = []
         for elem in self.__expression:
-            if _is_number(elem):
+            if is_number(elem):
                 expression_in_postfix.append(elem)
             if elem in Calculator.operations.keys():
                 while len(operator_stack) > 0 and operator_stack[-1] != '(' and (Calculator.operations[operator_stack[-1]].precedence > Calculator.operations[elem].precedence or (
@@ -188,11 +187,11 @@ class Calculator:
 
         self.__expression = expression_in_postfix
 
-    def evaluate_postfix(self):
+    def _evaluate_postfix(self):
         print(self.__expression)
         calculation_stack = []
         for elem in self.__expression:
-            if _is_number(elem):
+            if is_number(elem):
                 calculation_stack.append(float(elem))
             else:
                 n1 = float(calculation_stack.pop())
@@ -204,6 +203,3 @@ class Calculator:
 
 if __name__ == "__main__":
     Calculator().main()
-
-
-
