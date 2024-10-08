@@ -48,7 +48,7 @@ class Calculator:
     def menu_mode(self):
         mode = "None"
         while mode not in self.MODE_OPTIONS:
-            mode = input("Choose a mode from the list below (1):\n"
+            mode = input("Choose a mode from the list below (1-2):\n"
                          "1) Evaluate an algebraic expression\n"
                          "2) Continuous evaluation\n")
         self.__mode = mode
@@ -204,3 +204,6 @@ class Calculator:
 
 if __name__ == "__main__":
     Calculator().main()
+
+
+
