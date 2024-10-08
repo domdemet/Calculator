@@ -24,15 +24,14 @@ class Calculator:
         '^': Operator("power", '^', lambda n1, n2: n1 ** n2, 4, "right")
     }
 
-    _supported_operators = ''.join(operations.keys())
-    _sign = "+-"
-    _parentheses = "()"
+    SUPPORTED_OPERATORS = ''.join(operations.keys())
+    SIGN = "+-"
+    PARENTHESES = "()"
+    MODE_OPTIONS = "12back"
 
     def __init__(self):
         self.__mode = None
         self.__expression = None
-
-    # TODO: add keyboard actions, esc for "back" arrows to browse expression history
 
     def main(self):
         while True:
@@ -42,10 +41,13 @@ class Calculator:
                     self.evaluate_algebraic_expression()
                 case "2":
                     self.continuous_evaluation()
+                case "back":
+                    print("Exiting")
+                    return
 
     def menu_mode(self):
         mode = "None"
-        while mode not in "12back":
+        while mode not in self.MODE_OPTIONS:
             mode = input("Choose a mode from the list below (1):\n"
                          "1) Evaluate an algebraic expression\n"
                          "2) Continuous evaluation\n")
@@ -100,15 +102,15 @@ class Calculator:
     def validate_expression(self):
         if self.__expression == '':
             return {"value": False, "msg": "Expression is empty\n"}
-        if self.__expression[-1] in self._supported_operators or self.__expression[-1] == 'e':
+        if self.__expression[-1] in self.SUPPORTED_OPERATORS or self.__expression[-1] == 'e':
             return {"value": False, "msg": "Expression cannot end with an operator\n"}
         parentheses_counter = 0
 
         for i in range(len(self.__expression)):
             current = self.__expression[i]
             number: bool = _is_number(current)
-            operator: bool = current in self._supported_operators
-            parentheses: bool = current in self._parentheses
+            operator: bool = current in self.SUPPORTED_OPERATORS
+            parentheses: bool = current in self.PARENTHESES
 
             if current == 'e' and i < len(self.__expression) - 1:
                 before = self.__expression[i - 1]
@@ -128,7 +130,7 @@ class Calculator:
         return {"value": True, "msg": "Validation successful"}
 
     def validate_for_continuous_evaluation(self):
-        if self.__expression[0] not in self._supported_operators:
+        if self.__expression[0] not in self.SUPPORTED_OPERATORS:
             raise Exception("First element must be an operator")
 
     def evaluate_algebraic_expression_preprocessor(self, start_index: int = 0):
@@ -138,18 +140,18 @@ class Calculator:
             if i == 0:  # First character
                 if (first := self.__expression[0]) == '(':
                     preprocessed_expression += self.__expression[0] + ' '
-                elif _is_number(first) or first in Calculator._sign:
+                elif _is_number(first) or first in Calculator.SIGN:
                     preprocessed_expression += current
-                elif (first in Calculator._supported_operators) and first not in Calculator._sign:
+                elif (first in Calculator.SUPPORTED_OPERATORS) and first not in Calculator.SIGN:
                     raise Exception("Expression cannot start with an operator")
             else:  # Middle elements
-                if (current in Calculator._supported_operators + Calculator._parentheses) and (current not in Calculator._sign):
+                if (current in Calculator.SUPPORTED_OPERATORS + Calculator.PARENTHESES) and (current not in Calculator.SIGN):
                     preprocessed_expression += f" {current} "
 
-                elif current in Calculator._sign and _is_number(self.__expression[i - 1]) and _is_number(self.__expression[i + 1]):
+                elif current in Calculator.SIGN and _is_number(self.__expression[i - 1]) and _is_number(self.__expression[i + 1]):
                     preprocessed_expression += f" {current} "
 
-                elif current in Calculator._sign and (self.__expression[i - 1] == ')' or self.__expression[i + 1] == '('):
+                elif current in Calculator.SIGN and (self.__expression[i - 1] == ')' or self.__expression[i + 1] == '('):
                     preprocessed_expression += f" {current} "
                 else:
                     preprocessed_expression += self.__expression[i]
@@ -200,4 +202,5 @@ class Calculator:
         self.__expression = calculation_stack[0]
 
 
-Calculator().main()
+if __name__ == "__main__":
+    Calculator().main()
