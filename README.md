@@ -50,7 +50,7 @@ Main class that handles the evaluation of expressions.
 
 ## Usage
 
-1. Run the `Calculator` class.
+1. Run the `main()` method from the `Calculator` class.
 2. Choose a mode:
    - `1`: Evaluate an algebraic expression.
    - `2`: Continuous evaluation.
